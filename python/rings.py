@@ -146,7 +146,7 @@ def detect_rings_sp(session) -> dict:
     ml = None if risk.ML_SCORE.isna().all() else risk.ML_SCORE.fillna(0).values
     risk["FINAL_SCORE"] = blend(risk.RULE_SCORE.values, ml, np.zeros(len(risk)), wr, wm, wg)
     eligible = risk[(risk.FINAL_SCORE >= seed_thr * .5) | (risk.COMPLAINT_CNT >= 1)][["ACCOUNT_ID"]]
-    session.sql(f"CREATE OR REPLACE TEMPORARY TABLE {DB}.ANALYTICS.TMP_ELIGIBLE (ACCOUNT_ID VARCHAR)").collect()
+    session.sql(f"CREATE OR REPLACE TRANSIENT TABLE {DB}.ANALYTICS.TMP_ELIGIBLE (ACCOUNT_ID VARCHAR)").collect()
     write_df(session, eligible, f"{DB}.ANALYTICS.TMP_ELIGIBLE")
     transfers = to_pandas(session, f"""
         WITH anchor AS (SELECT MAX(TXN_TS) AS AS_OF FROM {DB}.CURATED.TXN_ENRICHED)

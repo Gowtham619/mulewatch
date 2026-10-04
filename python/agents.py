@@ -72,7 +72,7 @@ def triage_sp(session, limit: int = 200) -> dict:
         f"Confirmed adverse media: {int(r.MEDIA_HITS)}. Activity in last 48h: {'yes' if r.RECENT else 'no'}. "
         f"Rules fired: {', '.join(sorted(set(filter(None, str(r.RULES or '').split(',')))))}. "
         f"Assigned priority {r.PRIORITY}."), axis=1)
-    session.sql(f"CREATE OR REPLACE TEMPORARY TABLE {DB}.ANALYTICS.TMP_TRIAGE (CASE_ID VARCHAR, FACTS VARCHAR, "
+    session.sql(f"CREATE OR REPLACE TRANSIENT TABLE {DB}.ANALYTICS.TMP_TRIAGE (CASE_ID VARCHAR, FACTS VARCHAR, "
                 f"PRIORITY VARCHAR, PRIORITY_SCORE FLOAT, REGION VARCHAR)").collect()
     from common import write_df
     write_df(session, df[["CASE_ID", "FACTS", "PRIORITY", "PRIORITY_SCORE", "REGION"]], f"{DB}.ANALYTICS.TMP_TRIAGE")
@@ -116,7 +116,7 @@ def gather_evidence(session, case_id: str) -> dict:
         mem_sql = f"SELECT ACCOUNT_ID, ROLE FROM {DB}.ANALYTICS.RING_MEMBERS WHERE RING_ID = {q(c.RING_ID)}"
     else:
         mem_sql = f"SELECT {q(c.PRIMARY_ACCOUNT_ID)} AS ACCOUNT_ID, 'SUBJECT' AS ROLE"
-    session.sql(f"CREATE OR REPLACE TEMPORARY TABLE {DB}.ANALYTICS.TMP_MEMBERS AS {mem_sql}").collect()
+    session.sql(f"CREATE OR REPLACE TRANSIENT TABLE {DB}.ANALYTICS.TMP_MEMBERS AS {mem_sql}").collect()
     M = f"{DB}.ANALYTICS.TMP_MEMBERS"
     members = to_pandas(session, f"""
         SELECT m.ACCOUNT_ID, m.ROLE, cu.FULL_NAME, cu.CITY, cu.OCCUPATION_DECLARED, cu.ANNUAL_INCOME_DECLARED,
