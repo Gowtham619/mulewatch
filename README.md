@@ -79,7 +79,9 @@ flowchart LR
   AG --> UI
   UI -- approve / reject --> FB[(Feedback labels)]
   FB -- Tasks: TUNE_RULES + retrain --> R & M
-  classDef s fill:#dbeafe; classDef j fill:#fef3c7; classDef u fill:#dcfce7;
+  classDef s fill:#dbeafe
+  classDef j fill:#fef3c7
+  classDef u fill:#dcfce7
 ```
 
 **Tasks DAG** (created suspended, so it costs nothing until you turn it on):
