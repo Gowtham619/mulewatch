@@ -251,7 +251,7 @@ def investigate_sp(session, case_id: str) -> dict:
     if len(pack) > 24000:  # keep prompt bounded
         ev["members"] = ev["members"][:15]
         pack = _j(ev)[:24000]
-    summary = complete_json(session, INVESTIGATOR_PROMPT + pack, model=model, max_tokens=2000)
+    summary = complete_json(session, INVESTIGATOR_PROMPT + pack, model=model, max_tokens=4000)
     conf = summary.get("confidence")
     try:
         conf = float(conf)
@@ -333,7 +333,7 @@ def compliance_sp(session, case_id: str) -> dict:
     ev_text = _j(evidence)[:18000]
     prompt = (STR_PROMPT + "\nEVIDENCE:\n" + ev_text + "\n\nINVESTIGATION:\n" + _j(summary)[:5000]
               + "\n\nPOLICY EXCERPTS:\n" + pol)
-    draft = complete_json(session, prompt, model=model, max_tokens=3000)
+    draft = complete_json(session, prompt, model=model, max_tokens=6000)
     allowed = {x["CHUNK_ID"] for x in chunks}
     cited = set(draft.get("citations") or []) | set(re.findall(r"\[([A-Z]{3}-\d{2}#\d+)\]", _j(draft)))
     for g in draft.get("grounds_of_suspicion") or []:

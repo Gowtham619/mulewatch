@@ -151,24 +151,78 @@ def light_model(session) -> str:
 _JSON_RE = re.compile(r"\{.*\}", re.S)
 
 
+def _repair_truncated(s: str):
+    """Best-effort repair of a JSON object cut off by the token limit: drop the unfinished
+    tail after the last complete element and close any open brackets."""
+    for cut in [len(s)] + [i for i in range(len(s) - 1, 0, -1) if s[i] == ","][:400]:
+        cand = s[:cut]
+        stack, in_str, esc = [], False, False
+        for ch in cand:
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+            elif ch == '"':
+                in_str = True
+            elif ch in "{[":
+                stack.append("}" if ch == "{" else "]")
+            elif ch in "}]" and stack:
+                stack.pop()
+        if in_str:
+            continue
+        try:
+            v = json.loads(cand.rstrip().rstrip(",") + "".join(reversed(stack)))
+            if isinstance(v, dict):
+                v["_truncated"] = cut < len(s) or bool(stack)
+                return v
+        except Exception:
+            continue
+    return None
+
+
 def parse_json_loose(text: Any) -> dict:
     if isinstance(text, dict):
         return text
     if text is None:
         return {}
     s = str(text).strip()
+    # AI_COMPLETE may return a JSON-quoted string; unwrap it (possibly twice)
+    for _ in range(2):
+        if s.startswith('"'):
+            try:
+                u = json.loads(s)
+                if isinstance(u, str):
+                    s = u.strip()
+                    continue
+            except Exception:
+                try:  # truncated quoted string: unescape manually
+                    s = json.loads(s.rstrip('"') + '"').strip()
+                    continue
+                except Exception:
+                    pass
+        break
+    s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip())
     try:
         v = json.loads(s)
-        if isinstance(v, str):  # double-encoded
+        if isinstance(v, str):
             v = json.loads(v)
         return v if isinstance(v, dict) else {"value": v}
     except Exception:
+        pass
+    start = s.find("{")
+    if start >= 0:
         m = _JSON_RE.search(s)
         if m:
             try:
                 return json.loads(m.group(0))
             except Exception:
                 pass
+        fixed = _repair_truncated(s[start:])
+        if fixed is not None:
+            return fixed
     return {"raw": s}
 
 
