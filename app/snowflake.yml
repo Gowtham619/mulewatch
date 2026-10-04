@@ -1,0 +1,14 @@
+definition_version: 2
+entities:
+  mulewatch_app:
+    type: streamlit
+    identifier:
+      name: MULEWATCH_APP
+      database: MULEWATCH
+      schema: APP
+    title: "MuleWatch - Agentic Mule-Ring Investigator"
+    query_warehouse: MULEWATCH_WH
+    main_file: streamlit_app.py
+    artifacts:
+      - streamlit_app.py
+      - environment.yml

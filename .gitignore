@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+app/.streamlit/secrets.toml
+.DS_Store
+*.joblib
+app/output/

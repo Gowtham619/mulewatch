@@ -1,0 +1,6 @@
+name: mulewatch_app
+channels:
+  - snowflake
+dependencies:
+  - altair
+  - pandas
